@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain9x - 大脑训练数独游戏</title>
+
+    <!-- 引入 Font Awesome 图标库 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- 引入样式表 -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 头部：标题 + 设置按钮 -->
+        <header class="game-header">
+            <h1><i class="fas fa-brain"></i> Brain9x</h1>
+            <div class="header-buttons">
+                <button id="settingsBtn" class="icon-btn" title="设置">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button id="historyBtn" class="icon-btn" title="历史记录">
+                    <i class="fas fa-history"></i>
+                </button>
+                <button id="themeToggle" class="icon-btn" title="切换主题">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- 游戏信息栏：难度 + 计时器 -->
+        <div class="game-info">
+            <div class="difficulty-display">
+                <span class="label">难度：</span>
+                <span id="currentDifficulty">简单</span>
+            </div>
+            <div class="timer-display">
+                <i class="fas fa-clock"></i>
+                <span id="timer">00:00</span>
+            </div>
+        </div>
+
+        <!-- 数独棋盘 -->
+        <div class="sudoku-board" id="sudokuBoard">
+            <!-- 9x9的格子将由JavaScript动态生成 -->
+        </div>
+
+        <!-- 数字按钮（移动端友好） -->
+        <div class="number-pad">
+            <button class="num-btn" data-num="1">1</button>
+            <button class="num-btn" data-num="2">2</button>
+            <button class="num-btn" data-num="3">3</button>
+            <button class="num-btn" data-num="4">4</button>
+            <button class="num-btn" data-num="5">5</button>
+            <button class="num-btn" data-num="6">6</button>
+            <button class="num-btn" data-num="7">7</button>
+            <button class="num-btn" data-num="8">8</button>
+            <button class="num-btn" data-num="9">9</button>
+            <button class="num-btn delete-btn" data-num="0">
+                <i class="fas fa-eraser"></i>
+            </button>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="control-buttons">
+            <button id="newGameBtn" class="btn primary-btn">
+                <i class="fas fa-plus"></i> 新游戏
+            </button>
+            <button id="pauseBtn" class="btn">
+                <i class="fas fa-pause"></i> 暂停
+            </button>
+            <button id="hintBtn" class="btn">
+                <i class="fas fa-lightbulb"></i> 提示
+            </button>
+        </div>
+
+        <!-- 高级控制按钮 -->
+        <div class="advanced-buttons">
+            <button id="noteModeBtn" class="btn small-btn" title="笔记模式 (N)">
+                <i class="fas fa-pencil-alt"></i> 笔记
+            </button>
+            <button id="undoBtn" class="btn small-btn" title="撤销 (Ctrl+Z)">
+                <i class="fas fa-undo"></i>
+            </button>
+            <button id="redoBtn" class="btn small-btn" title="重做 (Ctrl+Y)">
+                <i class="fas fa-redo"></i>
+            </button>
+            <button id="checkBtn" class="btn small-btn" title="检查答案">
+                <i class="fas fa-check"></i>
+            </button>
+            <button id="saveBtn" class="btn small-btn" title="保存进度">
+                <i class="fas fa-save"></i>
+            </button>
+        </div>
+
+        <!-- 状态提示 -->
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <!-- 新游戏模态框 -->
+    <div id="newGameModal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-gamepad"></i> 开始新游戏</h2>
+            <p>选择难度：</p>
+            <div class="difficulty-options">
+                <button class="difficulty-btn" data-difficulty="easy">
+                    <i class="fas fa-smile"></i> 简单
+                </button>
+                <button class="difficulty-btn" data-difficulty="medium">
+                    <i class="fas fa-meh"></i> 中等
+                </button>
+                <button class="difficulty-btn" data-difficulty="hard">
+                    <i class="fas fa-grimace"></i> 困难
+                </button>
+            </div>
+            <button id="cancelNewGame" class="btn">取消</button>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-cog"></i> 游戏设置</h2>
+            <div class="setting-item">
+                <label for="errorCheckMode">
+                    <i class="fas fa-exclamation-triangle"></i> 错误检查模式
+                </label>
+                <select id="errorCheckMode">
+                    <option value="manual">提交检查（默认）</option>
+                    <option value="realtime">实时检查</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="highlightRelated">
+                    <i class="fas fa-highlighter"></i> 高亮相关格子
+                </label>
+                <select id="highlightRelated">
+                    <option value="true">开启（默认）</option>
+                    <option value="false">关闭</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>
+                    <i class="fas fa-info-circle"></i> 键盘快捷键
+                </label>
+                <div class="shortcut-list">
+                    <div class="shortcut-item">
+                        <span>移动选中</span>
+                        <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>输入数字</span>
+                        <kbd>1-9</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>删除</span>
+                        <kbd>Del</kbd><kbd>Backspace</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>笔记模式</span>
+                        <kbd>N</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>提示</span>
+                        <kbd>H</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>撤销/重做</span>
+                        <kbd>Ctrl+Z</kbd><kbd>Ctrl+Y</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>暂停</span>
+                        <kbd>Space</kbd>
+                    </div>
+                    <div class="shortcut-item">
+                        <span>取消选中</span>
+                        <kbd>Esc</kbd>
+                    </div>
+                </div>
+            </div>
+            <button id="closeSettings" class="btn">关闭</button>
+        </div>
+    </div>
+
+    <!-- 历史记录模态框 -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <h2><i class="fas fa-history"></i> 游戏历史</h2>
+            <div class="history-section">
+                <div class="section-header">
+                    <h3>历史记录</h3>
+                    <button id="clearHistoryBtn" class="icon-btn tiny-btn" title="清空历史记录">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div id="historyList" class="history-list">
+                    <!-- 历史记录将由JavaScript动态生成 -->
+                </div>
+            </div>
+            <div id="bestScores" class="best-scores">
+                <div class="section-header">
+                    <h3>最佳成绩</h3>
+                    <button id="clearBestScoresBtn" class="icon-btn tiny-btn" title="清空最佳成绩">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <div class="score-item">
+                    <span class="difficulty-label">简单：</span>
+                    <span id="bestEasy">--:--</span>
+                </div>
+                <div class="score-item">
+                    <span class="difficulty-label">中等：</span>
+                    <span id="bestMedium">--:--</span>
+                </div>
+                <div class="score-item">
+                    <span class="difficulty-label">困难：</span>
+                    <span id="bestHard">--:--</span>
+                </div>
+            </div>
+            <button id="closeHistory" class="btn">关闭</button>
+        </div>
+    </div>
+
+    <!-- 胜利动画模态框 -->
+    <div id="victoryModal" class="modal">
+        <div class="modal-content victory-content">
+            <div class="victory-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h2>恭喜胜利！</h2>
+            <p class="victory-stats">
+                难度：<span id="victoryDifficulty">简单</span><br>
+                用时：<span id="victoryTime">05:23</span>
+            </p>
+            <div class="victory-buttons">
+                <button id="playAgainBtn" class="btn primary-btn">
+                    <i class="fas fa-redo"></i> 再来一局
+                </button>
+                <button id="closeVictory" class="btn">
+                    <i class="fas fa-times"></i> 关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script src="js/generator.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
