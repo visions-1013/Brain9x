@@ -354,6 +354,7 @@ const UI = (function() {
         renderBoard();
         updateDifficultyDisplay();
         startTimer();
+        setGameControlsEnabled(true); // 启用所有控制按钮
         showStatusMessage('新游戏开始！', 'info');
     }
 
@@ -470,6 +471,52 @@ const UI = (function() {
      */
     function hideVictoryModal() {
         elements.victoryModal.classList.remove('active');
+        // 关闭胜利弹窗后，禁用游戏操作并提示
+        if (Game.isCompleted) {
+            setGameControlsEnabled(false);
+            showStatusMessage('游戏已完成，请点击"新游戏"开始新的挑战', 'info');
+        }
+    }
+
+    /**
+     * 设置游戏控制按钮的启用/禁用状态
+     * @param {boolean} enabled - 是否启用
+     */
+    function setGameControlsEnabled(enabled) {
+        const gameControls = [
+            'pauseBtn',      // 暂停按钮
+            'hintBtn',       // 提示按钮
+            'undoBtn',       // 撤销按钮
+            'redoBtn',       // 重做按钮
+            'noteModeBtn',   // 笔记模式按钮
+            'checkBtn',      // 检查按钮
+            'saveBtn'        // 保存按钮
+        ];
+
+        gameControls.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = !enabled;
+                // 添加/移除禁用样式
+                if (!enabled) {
+                    btn.classList.add('disabled');
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            }
+        });
+
+        // 禁用/启用棋盘点击
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            if (enabled) {
+                cell.style.pointerEvents = 'auto';
+                cell.classList.remove('game-completed');
+            } else {
+                cell.style.pointerEvents = 'none';
+                cell.classList.add('game-completed');
+            }
+        });
     }
 
     /**
@@ -554,12 +601,23 @@ const UI = (function() {
      * 检查当前棋盘
      */
     function checkCurrentBoard() {
+        // 先检查是否有空格子
+        const hasEmptyCell = Game.hasEmptyCell();
+
+        if (hasEmptyCell) {
+            showStatusMessage('还有未填的格子，请先完成所有格子', 'info');
+            return;
+        }
+
+        // 检查答案
         const result = Game.checkAnswer();
 
         if (result.isCorrect) {
-            showStatusMessage('全部正确！', 'success');
+            // 全部正确，触发胜利
+            showStatusMessage('🎉 恭喜！全部正确！', 'success');
+            onGameCompleted();
         } else {
-            showStatusMessage(`发现 ${result.errorCells.length} 个错误`, 'error');
+            showStatusMessage(`发现 ${result.errorCells.length} 个错误，请继续修改`, 'error');
 
             // 标记错误格子
             result.errorCells.forEach(({ row, col }) => {
@@ -609,19 +667,14 @@ const UI = (function() {
         Game.fillNumber(num);
         renderBoard();
 
-        // 检查是否完成
-        if (Game.isCompleted) {
-            onGameCompleted();
-        } else {
-            // 如果是实时检查模式，检查当前格子
-            const settings = Settings.getSettings();
-            if (settings.errorCheckMode === 'realtime' && Game.selectedCell) {
-                const { row, col } = Game.selectedCell;
-                if (!Game.checkCell(row, col)) {
-                    const cell = elements.board.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                    if (cell) {
-                        cell.classList.add('error');
-                    }
+        // 如果是实时检查模式，检查当前格子
+        const settings = Settings.getSettings();
+        if (settings.errorCheckMode === 'realtime' && Game.selectedCell) {
+            const { row, col } = Game.selectedCell;
+            if (!Game.checkCell(row, col)) {
+                const cell = elements.board.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (cell) {
+                    cell.classList.add('error');
                 }
             }
         }
@@ -680,6 +733,9 @@ const UI = (function() {
 
         // 更新最佳成绩
         Storage.updateBestScore(Game.difficulty, seconds);
+
+        // 标记游戏完成（禁用操作）
+        Game.markAsCompleted();
 
         showVictoryModal();
     }

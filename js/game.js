@@ -178,9 +178,6 @@ const Game = (function() {
 
             // 清空该格子的笔记
             gameState.notes[row][col] = [];
-
-            // 检查是否完成
-            checkCompletion();
         }
     }
 
@@ -336,6 +333,8 @@ const Game = (function() {
         // 清空该格子的笔记
         gameState.notes[row][col] = [];
 
+        // 注意：不再自动检查是否完成，需要用户手动点击"检查"按钮
+
         // 返回提示的位置用于动画
         return { row, col };
     }
@@ -378,6 +377,30 @@ const Game = (function() {
         const correctNum = gameState.solution[row][col];
 
         return playerNum === 0 || playerNum === correctNum;
+    }
+
+    /**
+     * 检查是否还有空格子
+     * @returns {boolean} 是否有空格子
+     */
+    function hasEmptyCell() {
+        for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+                const val = gameState.playerBoard[row][col];
+                // 检查是否为空或无效值
+                if (typeof val !== 'number' || val < 1 || val > 9) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 标记游戏为完成状态
+     */
+    function markAsCompleted() {
+        gameState.isCompleted = true;
     }
 
     /**
@@ -518,6 +541,8 @@ const Game = (function() {
         initGame: initGame,
         loadGame: loadGame,
         isGameInitialized: isGameInitialized,
+        hasEmptyCell: hasEmptyCell,
+        markAsCompleted: markAsCompleted,
         selectCell: selectCell,
         deselectCell: deselectCell,
         fillNumber: fillNumber,

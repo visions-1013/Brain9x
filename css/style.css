@@ -398,6 +398,16 @@ body {
     transform: none;
 }
 
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-small);
+}
+
+/* 游戏完成后的棋盘样式 */
+.cell.game-completed {
+    opacity: 0.7;
+}
+
 .primary-btn {
     background: var(--btn-primary);
     color: white;
@@ -419,6 +429,28 @@ body {
 
 .danger-btn:hover {
     background: #d32f2f;
+}
+
+/* 检查按钮 - 蓝色 */
+.check-btn {
+    background: #2196f3;
+    color: white;
+}
+
+.check-btn:hover {
+    background: #1976d2;
+}
+
+/* 新游戏按钮 - 白底边框样式 */
+.new-game-btn {
+    background: white;
+    color: var(--text-primary);
+    border: 2px solid var(--btn-primary);
+}
+
+.new-game-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--btn-primary-hover);
 }
 
 /* ==================== 状态提示 ==================== */
